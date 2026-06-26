@@ -10,7 +10,7 @@ from src.components.dialog_auto_enroll import auto_enroll_dialog
 def main():
     st.set_page_config(
         page_title='RollCall AI - Making Attendance faster using AI',
-        page_icon= "http://localhost:5002/static/img/logo.png"
+        page_icon= "https://roll-call-ai.vercel.app/static/img/logo.png"
     )
     if 'login_type' not in st.session_state:
         st.session_state['login_type'] = None

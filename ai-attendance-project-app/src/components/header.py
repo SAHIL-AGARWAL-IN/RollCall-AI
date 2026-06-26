@@ -3,7 +3,7 @@ import streamlit as st
 
 def header_home():
 
-    logo_url = "http://localhost:5002/static/img/logo.png"
+    logo_url = "https://roll-call-ai.vercel.app/static/img/logo.png"
     
     st.markdown(f"""
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-bottom:30px; margin-top:30px">
@@ -16,7 +16,7 @@ def header_home():
 
 def header_dashboard():
 
-    logo_url = "http://localhost:5002/static/img/logo.png"
+    logo_url = "https://roll-call-ai.vercel.app/static/img/logo.png"
     
     st.markdown(f"""
         <div style="display:flex; align-items:center; justify-content:center; gap:12px">
