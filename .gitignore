@@ -1,0 +1,27 @@
+# Virtual environments
+ai-attendance-project-app/.venv/
+ai-attendance-project-landing/.venv/
+.venv/
+venv/
+ENV/
+env/
+
+# Python caching & builds
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+build/
+dist/
+*.egg-info/
+
+# Streamlit secrets (crucial to NOT commit to public repo; must configure on hosting dashboard)
+ai-attendance-project-app/.streamlit/secrets.toml
+
+# Logs, databases, and OS files
+.DS_Store
+Thumbs.db
+*.log
+*.sqlite
+.idea/
+.vscode/
