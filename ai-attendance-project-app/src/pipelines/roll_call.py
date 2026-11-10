@@ -4,7 +4,6 @@ from time import perf_counter
 
 import numpy as np
 
-from src.database.db import get_student_names
 from src.pipelines.annotate import crop_face, draw_matches
 from src.pipelines.face_pipeline import WEAK_MATCH, detect_faces, match_faces
 from src.ui.format import first_name, plural
@@ -85,8 +84,9 @@ def scan_class_photos(subject, images, roster, report=_silent):
         scans.append((img, faces, verdicts))
 
     report("start", f"Marking the {subject['subject_code']} register")
-    other_names = get_student_names({sid for sid in outsiders} | {sid for sid, _ in doubles} - set(on_roster))
-    name_of = lambda sid: on_roster[sid]['name'] if sid in on_roster else other_names.get(sid, f"Student {sid}")
+    # Only students on this subject's roster are named. Anyone else stays anonymous, so a photo
+    # can't be used to identify students from other teachers' classes.
+    name_of = lambda sid: on_roster[sid]['name'] if sid in on_roster else "someone not enrolled"
 
     annotated, strangers = [], []
     for img, faces, verdicts in scans:
@@ -96,10 +96,12 @@ def scan_class_photos(subject, images, roster, report=_silent):
                 boxes.append({'box': face['box'], 'label': first_name(name_of(sid)) + '?', 'kind': 'weak'})
             elif verdict == 'match':
                 boxes.append({'box': face['box'], 'label': first_name(name_of(sid)), 'kind': 'match'})
-            elif verdict == 'double':
+            elif verdict == 'double' and sid in on_roster:
                 boxes.append({'box': face['box'], 'label': f"{first_name(name_of(sid))} again?", 'kind': 'weak'})
+            elif verdict == 'double':
+                boxes.append({'box': face['box'], 'label': "Not enrolled", 'kind': 'unknown'})
             elif verdict == 'outsider':
-                boxes.append({'box': face['box'], 'label': f"{first_name(name_of(sid))}, not enrolled", 'kind': 'unknown'})
+                boxes.append({'box': face['box'], 'label': "Not enrolled", 'kind': 'unknown'})
             else:
                 boxes.append({'box': face['box'], 'label': '?', 'kind': 'unknown'})
             if verdict != 'match':
@@ -124,9 +126,12 @@ def scan_class_photos(subject, images, roster, report=_silent):
         flags.append(f"{plural(unknown, 'face')} didn't match any student. "
                      f"{'It has' if unknown == 1 else 'They have'} a red box on the photo.")
     for sid, photo_no in doubles:
-        flags.append(f"Two faces in photo {photo_no} look like {name_of(sid)}. The closer one counts; check the other.")
-    for sid, photo_nos in outsiders.items():
-        flags.append(f"{name_of(sid)} is in photo {', '.join(map(str, photo_nos))} but isn't enrolled in {subject['subject_code']}.")
+        if sid in on_roster:
+            flags.append(f"Two faces in photo {photo_no} look like {name_of(sid)}. The closer one counts; check the other.")
+    if outsiders:
+        photos = sorted({n for photo_nos in outsiders.values() for n in photo_nos})
+        flags.append(f"{plural(len(outsiders), 'person', 'people')} in photo {', '.join(map(str, photos))} "
+                     f"{'is' if len(outsiders) == 1 else 'are'} a RollCall student but not enrolled in {subject['subject_code']}.")
     weak_names = [r['name'] for r in rows if r['check']]
     if weak_names:
         flags.append(f"Weak {'match' if len(weak_names) == 1 else 'matches'} for {_join(weak_names)}. "
