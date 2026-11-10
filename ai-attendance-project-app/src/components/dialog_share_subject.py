@@ -1,32 +1,40 @@
 import streamlit as st
+from urllib.parse import urlsplit
 
 import segno
 import io
 
+from src.ui.format import esc
 
-@st.dialog("Share Class Link")
+APP_DOMAIN = "https://rollcall-ai.streamlit.app"
+
+
+def app_domain():
+    # Use the address the teacher is on, so links work on local and preview deployments too
+    try:
+        parts = urlsplit(st.context.url)
+        if parts.scheme and parts.netloc:
+            return f"{parts.scheme}://{parts.netloc}"
+    except Exception:
+        pass
+    return APP_DOMAIN
+
+
+@st.dialog("Join code")
 def share_subject_dialog(subject_name, subject_code):
-    app_domain = "https://rollcall-ai.streamlit.app"
-    join_url = f"{app_domain}/?join-code={subject_code}"
+    join_url = f"{app_domain()}/?join-code={subject_code}"
 
-    st.header("Scan to Join")
+    st.html(f'<p class="join-code">{esc(subject_code)}</p>'
+            f'<p class="join-code-help">Students open RollCall, sign in, choose Join a subject and enter this code for {esc(subject_name)}. '
+            'Or they scan the QR code below.</p>')
 
     qr = segno.make(join_url)
 
     out = io.BytesIO()
 
-    qr.save(out, kind='png', scale=10, border=1)
+    qr.save(out, kind='png', scale=10, border=2)
 
-    col1, col2 = st.columns(2)
+    st.image(out.getvalue(), width="stretch", alt=f"QR code to join {subject_name}")
 
-    with col1:
-        st.markdown('### Copy Link')
-        st.code(join_url, language="text")
-        st.code(subject_code, language="text")
-        st.info('Copy this link to share on Whatsapp or Email')
-
-    with col2:
-        st.markdown('### Scan to Join')
-        st.image(out.getvalue(), caption='QRCODE for class joining')
-
-        
+    st.caption("Join link, to share on WhatsApp or email")
+    st.code(join_url, language=None)

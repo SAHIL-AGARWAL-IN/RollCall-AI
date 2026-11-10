@@ -44,33 +44,30 @@ def identify_speaker(new_embedding, candidates_dict, threshold=0.65):
 
 
 
-def process_bulk_audio(audio_bytes, candidates_dict, threshold=0.65):
+def identify_segments(audio_bytes, candidates_dict, threshold=0.65):
+    """Split a roll-call recording at the pauses and work out who spoke in each part.
 
-    try:
-        encoder = load_voice_encoder()
+    Returns one dict per spoken part: its start time in seconds, the matched student_id
+    (None when no enrolled voice is close enough) and the similarity score.
+    """
+    encoder = load_voice_encoder()
 
-        audio, sr = librosa.load(io.BytesIO(audio_bytes), sr=16000)
-        segments = librosa.effects.split(audio, top_db=30)
+    audio, sr = librosa.load(io.BytesIO(audio_bytes), sr=16000)
+    segments = librosa.effects.split(audio, top_db=30)
 
-        identified_results = {}
+    results = []
 
+    for start, end in segments:
 
-        for start, end in segments:
+        if (end-start) < sr * 0.5:
+            continue
+        wav = preprocess_wav(audio[start:end])
+        if len(wav) == 0:
+            # Nothing left once background noise is trimmed
+            continue
+        embedding = encoder.embed_utterance(wav)
 
-            if (end-start) < sr * 0.5:
-                continue
-            segment_audio = audio[start:end]
-            wav = preprocess_wav(segment_audio)
-            embedding = encoder.embed_utterance(wav)
+        sid, score = identify_speaker(embedding, candidates_dict, threshold)
+        results.append({'start': start / sr, 'student_id': sid, 'score': float(score)})
 
-
-            sid, score = identify_speaker(embedding, candidates_dict, threshold)
-
-            if sid:
-                if sid not in identified_results or score > identified_results[sid]:
-                    identified_results[sid] = score
-
-        return identified_results
-    except Exception as e:
-        st.error('Bulk process error')
-        return {}
+    return results

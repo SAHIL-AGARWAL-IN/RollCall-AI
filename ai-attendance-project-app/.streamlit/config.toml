@@ -1,6 +1,22 @@
+[client]
+toolbarMode = "minimal"
+
 [theme]
-primaryColor = "#6366F1"
-backgroundColor = "#060913"
-secondaryBackgroundColor = "rgba(255, 255, 255, 0.03)"
-textColor = "#F8FAFC"
-font = "sans serif"
+base = "light"
+primaryColor = "#1F3AA8"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F4FA"
+textColor = "#1B2130"
+borderColor = "#D8E0EE"
+showWidgetBorder = true
+linkColor = "#1F3AA8"
+redColor = "#C62F37"
+blueColor = "#1F3AA8"
+greenColor = "#1E7F5C"
+baseRadius = "10px"
+buttonRadius = "10px"
+font = "Atkinson Hyperlegible Next:https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700;800&display=swap"
+headingFont = "Atkinson Hyperlegible Next"
+headingFontWeights = [800, 800, 700, 700, 700, 700]
+headingFontSizes = ["2.125rem", "1.5rem", "1.2rem", "1.05rem", "1rem", "1rem"]
+dataframeHeaderBackgroundColor = "#F1F4FA"

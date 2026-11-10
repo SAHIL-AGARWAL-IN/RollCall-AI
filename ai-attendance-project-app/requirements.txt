@@ -24,3 +24,6 @@ librosa
 webrtcvad-wheels
 torch
 resemblyzer
+
+# Viewer timezones for attendance times
+tzdata
