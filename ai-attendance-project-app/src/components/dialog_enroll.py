@@ -1,29 +1,30 @@
 import streamlit as st
-from src.database.db import enroll_student_to_subject
-from src.database.config import supabase
-
-import time
+from src.database.db import enroll_student_to_subject, get_subject_by_code, is_enrolled
 
 
-@st.dialog("Enroll in Subject")
+
+@st.dialog("Join a subject")
 def enroll_dialog():
-    st.write('Enter the subject code provided by your teacher to enroll')
-    join_code = st.text_input('Subject Code', placeholder='Eg. CS101')
+    with st.form("join_subject", border=False):
+        join_code = st.text_input('Subject code', placeholder='CS101', help="Your teacher shares this code in class.")
+        submitted = st.form_submit_button('Join subject', type='primary', width='stretch')
 
-    if st.button('Enroll now', type='primary', width='stretch'):
-        if join_code:
-            res = supabase.table('subjects').select('subject_id, name, subject_code').eq('subject_code', join_code).execute()
-            if res.data:
-                subject = res.data[0]
-                student_id = st.session_state.student_data['student_id']
+    if not submitted:
+        return
+    if not join_code.strip():
+        st.warning('Enter the subject code from your teacher.')
+        return
 
-                check = supabase.table('subject_students').select('*').eq('subject_id', subject['subject_id']).eq('student_id', student_id).execute()
-                if check.data:
-                    st.warning('You are already enrolled in this program')
-                else:
-                    enroll_student_to_subject(student_id, subject['subject_id'])
-                    st.success('Succesfully enrolled!')
-                    time.sleep(1)
-                    st.rerun()
-        else:
-            st.warning('Please enter a subject code')
+    subject = get_subject_by_code(join_code)
+    if not subject:
+        st.error(f"No subject uses the code {join_code.strip().upper()}. Check it with your teacher.")
+        return
+
+    student_id = st.session_state.student_data['student_id']
+    if is_enrolled(student_id, subject['subject_id']):
+        st.info(f"You've already joined {subject['name']}.")
+        return
+
+    enroll_student_to_subject(student_id, subject['subject_id'])
+    st.toast(f"Joined {subject['name']}.", icon=":material/check_circle:")
+    st.rerun()

@@ -1,44 +1,32 @@
 import streamlit as st
-from src.database.db import enroll_student_to_subject
-from src.database.config import supabase
-
-import time
+from src.database.db import enroll_student_to_subject, get_subject_by_code, is_enrolled
 
 
-@st.dialog("Quick Enrollment")
+def close_join_link():
+    st.query_params.clear()
+
+
+@st.dialog("Join a subject", on_dismiss=close_join_link)
 def auto_enroll_dialog(subject_code):
     student_id = st.session_state.student_data['student_id']
 
-
-    res = supabase.table('subjects').select('subject_id, name').eq('subject_code', subject_code).execute()
-    if not res.data:
-        st.error('Subject Code not found!')
-        if st.button('Close'):
-            st.query_params.clear()
-            st.rerun()
+    subject = get_subject_by_code(subject_code)
+    if not subject:
+        st.error(f"No subject uses the code {subject_code.strip().upper()}. Ask your teacher for a new link.")
+        st.button('Close', on_click=close_join_link, width='stretch')
         return
-    subject = res.data[0]
 
-    check = supabase.table('subject_students').select('*').eq('subject_id', subject['subject_id']).eq('student_id', student_id).execute()
-    if check.data:
-        st.info('Youre already enrolled!')
-        if st.button('Got it!'):
-            st.query_params.clear()
-            st.rerun()
+    if is_enrolled(student_id, subject['subject_id']):
+        st.info(f"You've already joined {subject['name']}.")
+        st.button('Done', on_click=close_join_link, width='stretch')
         return
-    st.markdown(f'Would you like to enroll in **{subject['name']}**?')
 
-    col1, col2 = st.columns(2)
+    st.markdown(f"Join **{subject['name']}**, section {subject['section']}?")
 
-    with col1:
-        if st.button('No thanks'):
-            st.query_params.clear()
-            st.rerun()
-    with col2:
-        if st.button('Yes enroll now!', type='primary', width='stretch'):
+    with st.container(horizontal=True):
+        st.button('Not now', on_click=close_join_link, width='stretch')
+        if st.button('Join subject', type='primary', width='stretch'):
             enroll_student_to_subject(student_id, subject['subject_id'])
-            st.success('Joined succesfully!')
-            st.query_params.clear()
-            time.sleep(2)
+            close_join_link()
+            st.toast(f"Joined {subject['name']}.", icon=":material/check_circle:")
             st.rerun()
-

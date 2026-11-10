@@ -1,4 +1,4 @@
-streamlit
+streamlit>=1.67
 # Utilitites 
 numpy
 pandas
@@ -24,3 +24,6 @@ librosa
 webrtcvad-wheels
 torch
 resemblyzer
+
+# Viewer timezones for attendance times
+tzdata
